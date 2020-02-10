@@ -2,12 +2,12 @@
 
 """
 
-import pyrealsense2 as rs
+import pyrealsense2 as rs2
 import numpy as np
 import cv2
 
 
-def capture(pipe: rs.pipeline) -> None:
+def capture(pipe: rs2.pipeline) -> None:
     """
 
     :param pipe: a running pipeline
@@ -16,6 +16,7 @@ def capture(pipe: rs.pipeline) -> None:
 
     window_name = 'RealSense'
     cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)  # Init a window
+    colorizer: rs2.colorizer = rs2.colorizer()
 
     while cv2.waitKey(1) < 0:
 
@@ -31,7 +32,8 @@ def capture(pipe: rs.pipeline) -> None:
         color_image = np.asanyarray(color_frame.get_data())
 
         # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-        depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.1), cv2.COLORMAP_JET)
+        # depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.1), cv2.COLORMAP_JET)
+        depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
 
         # Stack both images horizontally
         images = np.hstack((color_image, depth_colormap))
@@ -41,10 +43,10 @@ def capture(pipe: rs.pipeline) -> None:
 
 
 if __name__ == "__main__":
-    pipe = rs.pipeline()
-    config = rs.config()
-    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)  # Format the depth channel from the camera
-    config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)  # Format the color channel from the camera
+    pipe = rs2.pipeline()
+    config = rs2.config()
+    config.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)  # Format the depth channel from the camera
+    config.enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)  # Format the color channel from the camera
     try:
         pipe.start(config)
         capture(pipe)
