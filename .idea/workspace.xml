@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="cce750f4-dba0-4d80-9846-5ca881e395de" name="Default" comment="Fixed capture.py, can now show color image and depth image">
+    <list default="true" id="cce750f4-dba0-4d80-9846-5ca881e395de" name="Default" comment="changed depth color map conversion">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/capture.py" beforeDir="false" afterPath="$PROJECT_DIR$/capture.py" afterDir="false" />
     </list>
@@ -125,22 +125,29 @@
       <option name="presentableId" value="LOCAL‎00001" />
       <updated>1581285017881</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL‎00002" summary="changed depth color map conversion">
+      <created>1581294349034</created>
+      <option name="number" value="LOCAL‎00002" />
+      <option name="presentableId" value="LOCAL‎00002" />
+      <updated>1581294349034</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Fixed capture.py, can now show color image and depth image" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed capture.py, can now show color image and depth image" />
+    <MESSAGE value="changed depth color map conversion" />
+    <option name="LAST_COMMIT_MESSAGE" value="changed depth color map conversion" />
   </component>
   <component name="WindowStateProjectService">
     <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1581291382398">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1581291382398" />
-    <state x="644" y="111" key="CommitChangelistDialog2" timestamp="1581285017334">
+    <state x="661" y="111" width="888" height="817" key="CommitChangelistDialog2" timestamp="1581294348460">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="644" y="111" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1581285017334" />
+    <state x="661" y="111" width="888" height="817" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1581294348460" />
     <state x="735" y="257" width="440" height="540" key="FileChooserDialogImpl" timestamp="1581265770715">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
@@ -185,9 +192,9 @@
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="438" y="159" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1581293978291" />
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1581285021783">
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2" timestamp="1581294351555">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1581285021783" />
+    <state x="552" y="253" key="Vcs.Push.Dialog.v2/0.0.1920.1040@0.0.1920.1040" timestamp="1581294351555" />
   </component>
 </project>

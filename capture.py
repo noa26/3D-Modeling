@@ -28,7 +28,7 @@ def capture(pipe: rs2.pipeline) -> None:
             continue
 
         # Convert images to numpy arrays
-        depth_image = np.asanyarray(depth_frame.get_data())
+        # depth_image = np.asanyarray(depth_frame.get_data())  # Not necessary with new conversion
         color_image = np.asanyarray(color_frame.get_data())
 
         # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
