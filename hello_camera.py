@@ -27,7 +27,7 @@ def main():
         print(util.serial_number(profile.get_device()))
 
         for i in range(10):
-            frames = pipe.wait_for_frames()
+            frames = pipe.wait_for_frames(timeout_ms=10000)
             for frame in frames:
                 timestamps.append(frame.get_timestamp())
 
