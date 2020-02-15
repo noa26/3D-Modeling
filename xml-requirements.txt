@@ -1,0 +1,8 @@
+requirements for configuration file:
+
+
+for each camera:
+# S/N
+# location:
+#    1st option: x,y, z, of all camera according to one primary camera.
+#    2nd option: radius and alpha (disregarding height this way)

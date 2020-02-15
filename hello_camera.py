@@ -10,31 +10,33 @@ import util
 def main():
     pipe = None
     ctx = rs.context()
-    print(len(ctx.devices), "devices connected")
+    print(len(ctx.devices), "devices connected.")
 
-    #   printing devices' serial numbers
-    for device in ctx.devices:
-        print(util.serial_number(device), end=",")
-    print()
-
-    #   trying to get frames -> just printing the timestamp
+    # getting frames frames and printing timestamp range
     timestamps = []
-    try:
-        pipe = rs.pipeline()
-        profile = pipe.start()
+    if len(ctx.devices):
 
-        # just so you'd know how to get a serial number from the pipe
-        print(util.serial_number(profile.get_device()))
+        #   printing devices' serial numbers
+        serial_numbers = [util.serial_number(device) for device in ctx.devices]
+        print("devices S/N:", ", ".join(serial_numbers))
 
-        for i in range(10):
-            frames = pipe.wait_for_frames(timeout_ms=10000)
-            for frame in frames:
-                timestamps.append(frame.get_timestamp())
+        try:
+            pipe = rs.pipeline()
 
-        print("picture were taken between", min(timestamps), "and", max(timestamps))
+            # profile is needed for distinguishing between cameras
+            profile = pipe.start()
 
-    finally:
-        pipe.stop()
+            for i in range(10):
+                frames = pipe.wait_for_frames(timeout_ms=10000)
+                for frame in frames:
+                    timestamps.append(frame.get_timestamp())
+
+            print("picture were taken between", min(timestamps), "and", max(timestamps))
+
+        finally:
+            pipe.stop()
+    else:
+        print("can't get frames!")
 
 
 if __name__ == "__main__":
