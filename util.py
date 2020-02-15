@@ -11,3 +11,6 @@ def beep(frequency=2500, duration=500):
 def serial_number(device):
     import pyrealsense2 as rs
     return int(device.get_info(rs.camera_info.serial_number))
+
+
+beep(frequency=4000)
