@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/venvTest" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.6 (3D-Modeling)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.6.8 (C:\Users\Noa\AppData\Local\Programs\Python\Python36\python36.exe)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="TestRunnerService">
