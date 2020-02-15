@@ -1,6 +1,5 @@
 """
-this code was written by marialarsson and published on:
-https://github.com/IntelRealSense/librealsense/issues/1735
+TODO: rewrite
 """
 from collections import Iterable
 
