@@ -2,81 +2,56 @@
 this code was written by marialarsson and published on:
 https://github.com/IntelRealSense/librealsense/issues/1735
 """
+from collections import Iterable
 
-import pyrealsense2 as rs
+import pyrealsense2 as rs2
 import numpy as np
 import cv2
-# import logging
+
+import util
 
 
-# Configure depth and color streams...
-# ...from Camera 1
-pipeline_1 = rs.pipeline()
-config_1 = rs.config()
-config_1.enable_device('013102060174')
-config_1.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config_1.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-# ...from Camera 2
-pipeline_2 = rs.pipeline()
-config_2 = rs.config()
-config_2.enable_device('046112051680')
-config_2.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config_2.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+def show_multi_cam(pipes: Iterable) -> None:
+    colorizer: rs2.colorizer = rs2.colorizer()
+
+    while cv2.waitKey(1) < 0:
+        for pipe in pipes:
+            # Camera 1
+            # Wait for a coherent pair of frames: depth and color
+            frames = pipe.wait_for_frames()
+            depth_frame = frames.get_depth_frame()
+            color_frame = frames.get_color_frame()
+            if not depth_frame or not color_frame:
+                continue
+            # Convert images to numpy arrays
+            color_image = np.asanyarray(color_frame.get_data())
+            # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
+            depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
+            images = np.hstack((color_image, depth_colormap))
+            win_name = 'RealSense {}'.format(str(pipe))
+            cv2.namedWindow(win_name, cv2.WINDOW_AUTOSIZE)
+            cv2.imshow(win_name, images)
 
 
-# Start streaming from both cameras
-pipeline_1.start(config_1)
-pipeline_2.start(config_2)
+if __name__ == '__main__':
+    pipeline_1 = rs2.pipeline()
+    config_1 = rs2.config()
+    config_1.enable_device('918512071186')
+    config_1.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+    config_1.enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
+    # ...from Camera 2
+    pipeline_2 = rs2.pipeline()
+    config_2 = rs2.config()
+    config_2.enable_device('918512072325')
+    config_2.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+    config_2.enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
 
-try:
-    while True:
+    try:
+        # Start streaming from both cameras
+        print(util.serial_number(pipeline_1.start(config_1).get_device()))
+        print(util.serial_number(pipeline_2.start(config_2).get_device()))
 
-        # Camera 1
-        # Wait for a coherent pair of frames: depth and color
-        frames_1 = pipeline_1.wait_for_frames()
-        depth_frame_1 = frames_1.get_depth_frame()
-        color_frame_1 = frames_1.get_color_frame()
-        if not depth_frame_1 or not color_frame_1:
-            continue
-        # Convert images to numpy arrays
-        depth_image_1 = np.asanyarray(depth_frame_1.get_data())
-        color_image_1 = np.asanyarray(color_frame_1.get_data())
-        # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-        depth_colormap_1 = cv2.applyColorMap(cv2.convertScaleAbs(depth_image_1, alpha=0.5), cv2.COLORMAP_JET)
-
-        # Camera 2
-        # Wait for a coherent pair of frames: depth and color
-        frames_2 = pipeline_2.wait_for_frames()
-        depth_frame_2 = frames_2.get_depth_frame()
-        color_frame_2 = frames_2.get_color_frame()
-        if not depth_frame_2 or not color_frame_2:
-            continue
-        # Convert images to numpy arrays
-        depth_image_2 = np.asanyarray(depth_frame_2.get_data())
-        color_image_2 = np.asanyarray(color_frame_2.get_data())
-        # Apply colormap on depth image (image must be converted to 8-bit per pixel first)
-        depth_colormap_2 = cv2.applyColorMap(cv2.convertScaleAbs(depth_image_2, alpha=0.5), cv2.COLORMAP_JET)
-
-        # Stack all images horizontally
-        images = np.hstack((color_image_1, depth_colormap_1,color_image_2, depth_colormap_2))
-
-        # Show images from both cameras
-        cv2.namedWindow('RealSense', cv2.WINDOW_NORMAL)
-        cv2.imshow('RealSense', images)
-        cv2.waitKey(1)
-
-        # Save images and depth maps from both cameras by pressing 's'
-        ch = cv2.waitKey(25)
-        if ch==115:
-            cv2.imwrite("my_image_1.jpg",color_image_1)
-            cv2.imwrite("my_depth_1.jpg",depth_colormap_1)
-            cv2.imwrite("my_image_2.jpg",color_image_2)
-            cv2.imwrite("my_depth_2.jpg",depth_colormap_2)
-            print("Save")
-
-
-finally:
-
-    # Stop streaming
-    pipeline_1.stop()
-    pipeline_2.stop()
+        show_multi_cam([pipeline_1, pipeline_2])
+    finally:
+        pipeline_1.stop()
+        pipeline_2.stop()
