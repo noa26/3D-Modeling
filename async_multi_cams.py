@@ -47,12 +47,12 @@ if __name__ == '__main__':
     configs = []
     pipelines = []
 
-    for serial_number in range(len(serial_numbers)):
+    for i in range(len(serial_numbers)):
         configs.append(rs2.config())
         pipelines.append(rs2.pipeline())
-        configs[serial_number].enable_device(serial_numbers[serial_number])
-        configs[serial_number].enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
-        configs[serial_number].enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
+        configs[i].enable_device(serial_numbers[i])
+        configs[i].enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+        configs[i].enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
 
     try:
         # Start streaming from all cameras
