@@ -116,5 +116,29 @@ if __name__ == '__main__':
     #         pipeline.stop()
 
     # capture_one_cam(cams_ids[0])
-    pipe = rs2.pipeline()
-    pipe.start()
+
+    pc: rs2.pointcloud = rs2.pointcloud()
+    # points = rs2.points()
+
+    pipe: rs2.pipeline = rs2.pipeline()
+    config: rs2.config = rs2.config()
+    config.enable_stream(rs2.stream.color, 640, 480, rs2.format.rgb8, 30)
+    config.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+    pipe.start(config)
+    while True:
+        frames: rs2.composite_frame = pipe.wait_for_frames()
+        color: rs2.video_frame = frames.get_color_frame()
+        depth: rs2.depth_frame = frames.get_depth_frame()
+        if (not depth) or (not color):
+            continue
+
+        points: rs2.points = pc.calculate(depth)
+        color = frames.get_color_frame()
+        pc.map_to(color)
+
+        vertices = np.asanyarray(points.get_vertices())
+        tex_coords = points.get_texture_coordinates()
+        for i in range(points.size()):
+            print(str(vertices[i]))
+
+

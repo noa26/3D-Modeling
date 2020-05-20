@@ -44,10 +44,13 @@ pipe.start(config)
 colorizer: rs2.colorizer = rs2.colorizer()
 
 # create a thresh filter with max distance of 0.7 meter
-thresh_filter: rs2.filter = rs2.threshold_filter(max_dist=0.9, min_dist=0.1)
-
+thresh_filter: rs2.filter = rs2.threshold_filter(max_dist=2.0, min_dist=0.0)
 
 try:
+    # wait for 30 frames to make it more accurate
+    for _ in range(30):
+        pipe.wait_for_frames()
+
     # wait for the next set of frames from the camera
     frames: rs2.composite_frame = pipe.wait_for_frames()
 
@@ -81,7 +84,7 @@ try:
     print("Finished converting to stl file")
 
     # remove the ply file
-    remove("temp.ply")
+    # remove("temp.ply")
     print("Removed the ply file")
 
 finally:
