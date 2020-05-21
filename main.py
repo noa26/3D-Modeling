@@ -11,6 +11,8 @@
 # - using open3d to create a mesh from point cloud (using ball pivoting algorithm)
 # - saving as a stl file (with open3d)
 
+# https://stackoverflow.com/questions/56965268/how-do-i-convert-a-3d-point-cloud-ply-into-a-mesh-with-faces-and-vertices
+
 # imports
 import pyrealsense2 as rs2
 import open3d as o3d
