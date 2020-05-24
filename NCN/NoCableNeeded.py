@@ -77,7 +77,7 @@ def capture_point_cloud(number_of_frames: int = 1, camera_id: str = "", max_dist
     return vertices
 
 
-def save_pc_to_xyz(point_cloud: np.numarray, xyz_filename: str = "NCN.xyz"):
+def add_pc_to_xyz(point_cloud: np.numarray, xyz_filename: str = "NCN.xyz"):
     """
     Gets a numpy array of the point cloud, and save the points into an xyz file.
     :param point_cloud: a point cloud of the object, as a nu,py array of lists that contains x,y,z coordinates.
@@ -206,7 +206,7 @@ def main():
             # rotate the pc
             manipulated_vertices = rotate_point_cloud(new_origin_vertices, angle)
 
-            save_pc_to_xyz(manipulated_vertices, filename)
+            add_pc_to_xyz(manipulated_vertices, filename)
 
         elif option == "2":
             convert_xyz_to_stl()
