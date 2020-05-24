@@ -1,4 +1,4 @@
-from pyrealsense2 import rs2
+import pyrealsense2 as rs2
 import open3d as o3d
 import numpy as np
 from math import sin, cos, radians
@@ -81,7 +81,7 @@ def save_pc_to_xyz(point_cloud: np.numarray, xyz_filename: str = "NCN.xyz"):
     """
     Gets a numpy array of the point cloud, and save the points into an xyz file.
     :param point_cloud: a point cloud of the object, as a nu,py array of lists that contains x,y,z coordinates.
-    :param filename: the filename to save the points into.
+    :param xyz_filename: the filename to save the points into.
     :return: nothing, void.
     """
     # Make sure the filename ends with '.stl'
