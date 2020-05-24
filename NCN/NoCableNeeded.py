@@ -186,7 +186,9 @@ def rotate_point_cloud(original_vertices: np.numarray, angle: int) -> np.numarra
 def main():
     while True:
         option = input(
-            "Do you want to:\t(1)Capture pc and save to xyz\n\t(2)Combine all previously captured pc to one stl file?")
+            "Do you want to:"
+            "\n\t(1)Capture pc and save to xyz"
+            "\n\t(2)Combine all previously captured pc to one stl file?\n")
 
         if option == "1":
             angle = int(input("Enter the angle to rotate the pc: "))
