@@ -6,7 +6,7 @@ from math import sin, cos, radians
 
 # The distance between the camera and the object
 # (for setting the object's center as the origin center of the point cloud)
-DISTANCE = 0.5
+DISTANCE = 0.3
 # debug boolean
 DEBUG = True
 # filename of xyz
@@ -184,6 +184,9 @@ def rotate_point_cloud(original_vertices: np.numarray, angle: int) -> np.numarra
 
 
 def main():
+    distance = float(input("Enter the distance between the object and the cameras (in meters): "))
+
+
     while True:
         option = input(
             "Do you want to:"
@@ -195,11 +198,11 @@ def main():
 
             print("Capturing point cloud")
             # capture a point cloud
-            original_vertices = capture_point_cloud(min_dist=0.1, max_dist=.2)
+            original_vertices = capture_point_cloud(min_dist=0.1, max_dist=distance)
             if DEBUG:
                 print("Manipulating the point cloud")
             # set the origin point to be the object's center (instead the camera's position)
-            new_origin_vertices = np.asanyarray([[-x, y, DISTANCE - z] for (x, y, z) in original_vertices])
+            new_origin_vertices = np.asanyarray([[-x, y, distance - z] for (x, y, z) in original_vertices])
             # rotate the pc
             manipulated_vertices = np.append(new_origin_vertices, rotate_point_cloud(new_origin_vertices, angle), axis=0)
 
