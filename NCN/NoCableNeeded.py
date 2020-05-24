@@ -204,7 +204,7 @@ def main():
             # set the origin point to be the object's center (instead the camera's position)
             new_origin_vertices = np.asanyarray([[-x, y, distance - z] for (x, y, z) in original_vertices])
             # rotate the pc
-            manipulated_vertices = np.append(new_origin_vertices, rotate_point_cloud(new_origin_vertices, angle), axis=0)
+            manipulated_vertices = rotate_point_cloud(new_origin_vertices, angle)
 
             save_pc_to_xyz(manipulated_vertices, filename)
 
