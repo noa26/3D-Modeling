@@ -1,7 +1,23 @@
-from typing import List
+from typing import List, Dict, Tuple
 
 import numpy as np
 import pyrealsense2 as rs2
+from collections import defaultdict
+
+from util import beep
+
+
+def average_pointcloud(pcs: List[np.ndarray]) -> np.ndarray:
+    xy_to_zs: Dict[Tuple[float, float], List[float]] = defaultdict(list)
+    for pc in pcs:
+        for point in pc:
+            xy_to_zs[(point[0], point[1])].append(point[2])
+
+    new_pc = []
+    for xy, zs in xy_to_zs.items():
+        new_pc.append([xy[0], xy[1], np.average(zs)])
+
+    return np.array(new_pc)
 
 
 def depthmatrix_to_pointcloud(matrix: np.ndarray, intrin: rs2.intrinsics, max_dist=float('Inf'),
@@ -58,26 +74,36 @@ if __name__ == '__main__':
         for _ in range(30):
             pipe.wait_for_frames()
 
-        all_frames = []
+        all_mats = []
         num_frames = 10
 
         # Saves 'num_frames' depthframe to matrix
         for i in range(num_frames):
             frames: rs2.composite_frame = pipe.wait_for_frames()
             depth_frame: rs2.depth_frame = frames.as_frameset().get_depth_frame().as_depth_frame()
-            all_frames.append(depthframe_to_depthmatrix(depth_frame))
+            mat = depthframe_to_depthmatrix(depth_frame)
+            all_mats.append(mat)
+
+        beep()
+
+        all_pcs = [depthmatrix_to_pointcloud(mat, intrin, max_dist=0.7, min_dist=0.1) for mat in all_mats]
 
         # Write each frame to file for testing
-        for i, frame in enumerate(all_frames):
-            pc: np.ndarray = depthmatrix_to_pointcloud(frame, intrin, max_dist=0.7, min_dist=0.1)
+        for i, pc in enumerate(all_pcs):
             with open(f'pc_test_{i}.xyz', 'w') as f:
                 for point in pc:
                     f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
-        # Write average frame to file for testing
-        pc = depthmatrix_to_pointcloud(sum(all_frames) / num_frames, intrin, max_dist=0.7, min_dist=0.1)
-        with open('pc_test_avg.xyz', 'w') as f:
-            for point in pc:
+        # Averaging after calculating pcs (with thresholds), Works!
+        avg_pc_1 = average_pointcloud(all_pcs)
+        with open('pc_test_avg_1.xyz', 'w') as f:
+            for point in avg_pc_1:
+                f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
+
+        # Averaging mats and then calculating pc, Doesn't Work!
+        avg_pc_2 = depthmatrix_to_pointcloud(np.average(all_mats, axis=0), intrin, max_dist=0.7, min_dist=0.1)
+        with open('pc_test_avg_2.xyz', 'w') as f:
+            for point in avg_pc_2:
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
     finally:
