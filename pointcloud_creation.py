@@ -7,8 +7,8 @@ from collections import defaultdict
 from util import beep
 
 
-def average_matrix_to_pointcloud(mats: List[np.ndarray], intrin: rs2.intrinsics, max_dist=float('Inf'),
-                                 min_dist=float('-Inf')) -> np.ndarray:
+def average_matrices_to_pointcloud(mats: List[np.ndarray], intrin: rs2.intrinsics, max_dist=float('Inf'),
+                                   min_dist=float('-Inf')) -> np.ndarray:
     """
     Uses rs2_deproject_pixel_to_point as in the depthmatrix_to_pointcloud function.
     Points the have the same i,j values have their z values averaged out, iff the z value is within the range.
@@ -34,7 +34,7 @@ def average_matrix_to_pointcloud(mats: List[np.ndarray], intrin: rs2.intrinsics,
     return np.array(pc)
 
 
-def average_pointcloud(pcs: List[np.ndarray]) -> np.ndarray:
+def average_pointclouds(pcs: List[np.ndarray]) -> np.ndarray:
     """
 
     :param pcs: A list of pointclouds
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
         # Averaging after calculating pcs (with thresholds),Works;
         # (Allot of points though, and may 'case weird behavior).
-        avg_pc_1 = average_pointcloud(all_pcs)
+        avg_pc_1 = average_pointclouds(all_pcs)
         with open('pc_test_avg_1.xyz', 'w') as f:
             for point in avg_pc_1:
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
         # Averaging mats while [?] calculating pc, Works.
-        avg_pc_3 = average_matrix_to_pointcloud(all_mats, intrin, max_dist=0.7, min_dist=0.1)
+        avg_pc_3 = average_matrices_to_pointcloud(all_mats, intrin, max_dist=0.7, min_dist=0.1)
         with open('pc_test_avg_3.xyz', 'w') as f:
             for point in avg_pc_3:
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
