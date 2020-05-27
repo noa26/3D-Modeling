@@ -7,15 +7,47 @@ from collections import defaultdict
 from util import beep
 
 
+def average_matrix_to_pointcloud(mats: List[np.ndarray], intrin: rs2.intrinsics, max_dist=float('Inf'),
+                                 min_dist=float('-Inf')) -> np.ndarray:
+    """
+    Uses rs2_deproject_pixel_to_point as in the depthmatrix_to_pointcloud function.
+    Points the have the same i,j values have their z values averaged out, iff the z value is within the range.
+    :param mats: A list of matrices that each represents the depth frame
+    :param intrin: The intrinsics of the camera
+    :param max_dist: the maximum distance
+    :param min_dist: the maximum distance
+    :return: A pointcloud calculated via averaging the matrices and the rs2_deproject_pixel_to_point function.
+    """
+    ij_to_zs: Dict[Tuple[int, int], List[float]] = defaultdict(list)
+    for mat in mats:
+        assert len(mat.shape) == 2
+
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
+                if min_dist <= mat[i][j] <= max_dist:
+                    ij_to_zs[(i, j)].append(mat[i][j])
+
+    pc = []
+    for (i, j), zs in ij_to_zs.items():
+        pc.append(rs2.rs2_deproject_pixel_to_point(intrin, [j, i], np.average(zs)))
+
+    return np.array(pc)
+
+
 def average_pointcloud(pcs: List[np.ndarray]) -> np.ndarray:
+    """
+
+    :param pcs: A list of pointclouds
+    :return: A new point cloud where points with the x,y values have their z values averaged out
+    """
     xy_to_zs: Dict[Tuple[float, float], List[float]] = defaultdict(list)
     for pc in pcs:
         for point in pc:
             xy_to_zs[(point[0], point[1])].append(point[2])
 
     new_pc = []
-    for xy, zs in xy_to_zs.items():
-        new_pc.append([xy[0], xy[1], np.average(zs)])
+    for (x, y), zs in xy_to_zs.items():
+        new_pc.append([x, y, np.average(zs)])
 
     return np.array(new_pc)
 
@@ -29,7 +61,7 @@ def depthmatrix_to_pointcloud(matrix: np.ndarray, intrin: rs2.intrinsics, max_di
     :param intrin: The intrinsics of the camera
     :param max_dist: the maximum distance
     :param min_dist: the maximum distance
-    :return: A pointcloud via the depth frame
+    :return: A pointcloud via the depth frame and the rs2_deproject_pixel_to_point function
     """
     assert len(matrix.shape) == 2
 
@@ -94,16 +126,23 @@ if __name__ == '__main__':
                 for point in pc:
                     f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
-        # Averaging after calculating pcs (with thresholds), Works!
+        # Averaging after calculating pcs (with thresholds),Works;
+        # (Allot of points though, and may 'case weird behavior).
         avg_pc_1 = average_pointcloud(all_pcs)
         with open('pc_test_avg_1.xyz', 'w') as f:
             for point in avg_pc_1:
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
-        # Averaging mats and then calculating pc, Doesn't Work!
+        # Averaging mats and then calculating pc, Doesn't Work.
         avg_pc_2 = depthmatrix_to_pointcloud(np.average(all_mats, axis=0), intrin, max_dist=0.7, min_dist=0.1)
         with open('pc_test_avg_2.xyz', 'w') as f:
             for point in avg_pc_2:
+                f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
+
+        # Averaging mats while [?] calculating pc, Works.
+        avg_pc_3 = average_matrix_to_pointcloud(all_mats, intrin, max_dist=0.7, min_dist=0.1)
+        with open('pc_test_avg_3.xyz', 'w') as f:
+            for point in avg_pc_3:
                 f.write(str(point[0]) + ' ' + str(point[1]) + ' ' + str(point[2]) + '\n')
 
     finally:
