@@ -1,0 +1,27 @@
+{
+  "software": {
+    "frames": 15,
+    "dummy_frames": 30,
+    "filters": [
+      [
+        "temporal_filter"
+      ]
+    ],
+    "after_filters": [
+      [
+        "threshold_filter",
+        0.15000000596046448,
+        0.7
+      ]
+    ],
+    "filename": "final_module.stl"
+  },
+  "cameras": [
+    {
+      "serial": "918512072325",
+      "angle": 0,
+      "distance": 0
+    }
+  ],
+  "hardware": {}
+}
