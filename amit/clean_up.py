@@ -77,8 +77,8 @@ def rotate_point_cloud_inplace(points: np.ndarray, angle: float) -> None:
     Rotate a given point cloud around the y axis with a given angle inplace.
     The way to rotate a vertex is with matrix multiplication of (4x4) * (4x1) = (4x1):
     (cos(alpha)   0   -sin(alpha) 0) * (x) = (new x)
-    (0            1   0           0) * (z) = (new z)
-    (sin(alpha)   0   cos(alpha)  0) * (y) = (new y)
+    (0            1   0           0) * (y) = (new y)
+    (sin(alpha)   0   cos(alpha)  0) * (z) = (new z)
     (0            0   0           1) * (1) = (1    )
     :param points: The original point cloud, as a numpy array.
     :param angle: The angle, in degrees, to rotate the point cloud around the y axis, as an int.
@@ -131,6 +131,23 @@ def angle_limit(points: np.ndarray, left_hor_bound: float = float('-Inf'), right
             del_idx.append(i)
 
     return np.delete(points, del_idx, axis=0)
+
+
+def filter_points(points: np.ndarray, pred: Callable[[Tuple[float, float, float]], bool]):
+    assert len(points.shape) == 2
+    assert points.shape[1] == 3
+
+    del_idx = []
+
+    for i, p in enumerate(points):
+        if not pred(p):  # predicate that return true if the points stays in the area
+            del_idx.append(i)
+
+    return np.delete(points, del_idx, axis=0)
+
+
+def demo_pred(angle: float) -> Callable[[Tuple[float, float, float]], bool]:
+    return lambda p: atan(p[2] / p[0]) <= angle / 2 and atan(p[2] / p[0]) >= -angle / 2
 
 
 def get_filter(filter_name: str, *args) -> rs2.filter_interface:
@@ -189,6 +206,7 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
     # Invert x, y axis and mirror the z axis around the distance line (Can add deviation adjustment)
     change_coordinates_inplace(points,
                                lambda p: (-p[0], -p[1], camera_map['distance'] - p[2]))
+    points = filter_points(points, demo_pred(60))
     rotate_point_cloud_inplace(points, camera_map['angle'])
     return points
 
