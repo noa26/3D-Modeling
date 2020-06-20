@@ -168,6 +168,7 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
     """
 
     config: rs2.config = rs2.config()
+    config.enable_stream(rs2.stream.depth)
     config.enable_device(camera_map['serial'])
 
     # Convert filter names and args to filter objects
@@ -192,7 +193,7 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
     return points
 
 
-def save_file(points: np.ndarray, filename: str, strategy: str = 'bpa') -> None:
+def save_file(points: np.ndarray, filename: str) -> None:
     """
     Save a point cloud to a file
     :param points: The point cloud to save to a file
@@ -205,22 +206,13 @@ def save_file(points: np.ndarray, filename: str, strategy: str = 'bpa') -> None:
     o3d_pc.points = o3d.utility.Vector3dVector(points)
     o3d_pc.estimate_normals()
 
-    if strategy == 'bpa':
-        distances = o3d_pc.compute_nearest_neighbor_distance()
-        avg_dist = np.mean(distances)
-        radius = 1.5 * avg_dist
+    distances = o3d_pc.compute_nearest_neighbor_distance()
+    avg_dist = np.mean(distances)
+    radius = 1.5 * avg_dist
 
-        mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
-            o3d_pc,
-            o3d.utility.DoubleVector([radius, radius * 2]))
-    elif strategy == 'poisson':
-        mesh: o3d.geometry.TriangleMesh = \
-            o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(o3d_pc, depth=8, width=0, scale=1.1,
-                                                                      linear_fit=False)[0]
-        bbox = o3d_pc.get_axis_aligned_bounding_box()
-        mesh = mesh.crop(bbox)
-    else:
-        raise Exception(f'Conversion strategy \'{strategy}\' does not exist!')
+    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_ball_pivoting(
+        o3d_pc,
+        o3d.utility.DoubleVector([radius, radius * 2]))
 
     o3d.io.write_triangle_mesh(filename, mesh)
 
@@ -237,6 +229,6 @@ if __name__ == '__main__':
                                    hardware_map=cfg_map['hardware'])
         pcs: List[np.ndarray] = pool.map(gen_pc, cams)
 
-    save_file(np.concatenate(pcs), cfg_map['software']['filename'], cfg_map['software']['strategy'])
+    save_file(np.concatenate(pcs), cfg_map['software']['filename'])
 
 # TODO: Add debug mode/logging option

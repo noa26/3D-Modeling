@@ -10,12 +10,11 @@
     "after_filters": [
       [
         "threshold_filter",
-        0.0,
-        0.25
+        0.15000000596046448,
+        0.7
       ]
     ],
-    "filename": "final_module.ply",
-    "strategy": "bpa"
+    "filename": "final_module.stl"
   },
   "cameras": [
     {
