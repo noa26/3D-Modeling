@@ -14,7 +14,8 @@
         0.7
       ]
     ],
-    "filename": "final_module.stl"
+    "filename": "final_module.ply",
+    "strategy": "bpa"
   },
   "cameras": [
     {

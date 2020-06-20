@@ -9,11 +9,13 @@ Anything to do software related.
     arguments (if needed).
 - **after_filters**: The filters to apply to final resulting frame, after applying the previous filters to each frame.
     Same structure as frames.  
-    The names for them in the json file are: _'decimation_filter'_, _'threshold_filter'_, _'disparity_transform'_,
-    _'spatial_filter'_, _'temporal_filter'_, _'hole_filling_filter'_  
+    The names for them in the json file are: _"decimation_filter"_, _"threshold_filter"_, _"disparity_transform"_,
+    _"spatial_filter"_, _"temporal_filter"_, _"hole_filling_filter"_  
     You can find the filter parameters here: https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md  
 - **filename**: The output file name (With extension).
-
+- **strategy**: The strategy to convert the point cloud to a triangle mesh.  
+    The strategy options are: _"bpa"_, _"poisson"_.
+   
 ## Cameras
 Camera related settings.
 
