@@ -1,7 +1,7 @@
 import functools
 import json
 import multiprocessing as mp
-from math import cos, radians, sin, atan, degrees
+from math import cos, radians, sin, atan
 from typing import List, Iterable, Tuple, Callable, Dict, Any
 
 import numpy as np
@@ -80,8 +80,8 @@ def rotate_point_cloud_inplace(points: np.ndarray, angle: float) -> None:
     (0            1   0           0) * (y) = (new y)
     (sin(alpha)   0   cos(alpha)  0) * (z) = (new z)
     (0            0   0           1) * (1) = (1    )
-    :param points: The original point cloud, as a numpy array.
-    :param angle: The angle, in degrees, to rotate the point cloud around the y axis, as an int.
+    :param points: The point cloud to rotate
+    :param angle: The angle, in degrees, to rotate the point cloud around the y axis
     """
 
     assert len(points.shape) == 2
@@ -106,48 +106,23 @@ def rotate_point_cloud_inplace(points: np.ndarray, angle: float) -> None:
             points[i][j] = res_vec[j]
 
 
-def angle_limit(points: np.ndarray, left_hor_bound: float = float('-Inf'), right_hor_bound: float = float('Inf'),
-                bottom_ver_bound: float = float('-Inf'), top_ver_bound: float = float('Inf')) -> np.ndarray:
-    """
-    Limits the range of the points in a point cloud by angle.
-    :param points: The point cloud to filter points out of
-    :param left_hor_bound: Left horizontal angle bound (negative value)
-    :param right_hor_bound: Right horizontal angle bound (positive value)
-    Probably abs(left_hor_bound) = abs(right_hor_bound).
-    :param bottom_ver_bound: The bottom vertical angle bound
-    :param top_ver_bound: The upper vertical angle bound
-    :return: A new point with only the points withing the bounds
-    """
-
-    assert len(points.shape) == 2
-    assert points.shape[1] == 3
-
-    del_idx = []
-
-    for i, (x, y, z) in enumerate(points):
-        hor_angle = degrees(atan(x / z))
-        ver_angle = degrees(atan(y / z))
-        if not left_hor_bound <= hor_angle <= right_hor_bound or not bottom_ver_bound <= ver_angle <= top_ver_bound:
-            del_idx.append(i)
-
-    return np.delete(points, del_idx, axis=0)
-
-
 def filter_points(points: np.ndarray, pred: Callable[[Tuple[float, float, float]], bool]):
+    """
+
+    :param points: The point cloud to filter points from
+    :param pred: A predicate to indicate whether to remove a point or not (if True, it is removed)
+    :return: A new point cloud without the filtered points
+    """
     assert len(points.shape) == 2
     assert points.shape[1] == 3
 
     del_idx = []
 
     for i, p in enumerate(points):
-        if not pred(p):  # predicate that return true if the points stays in the area
+        if pred(p):  # predicate that return true if the points are removed
             del_idx.append(i)
 
     return np.delete(points, del_idx, axis=0)
-
-
-def demo_pred(angle: float) -> Callable[[Tuple[float, float, float]], bool]:
-    return lambda p: atan(p[2] / p[0]) <= angle / 2 and atan(p[2] / p[0]) >= -angle / 2
 
 
 def get_filter(filter_name: str, *args) -> rs2.filter_interface:
@@ -200,13 +175,14 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
     # Convert to viable np.ndarray, and also filter 'zero' points
     points = np.array([(x, y, z) for (x, y, z) in points if not x == y == z == 0])
 
-    # Add angle restrictions, for now this is empty
-    points = angle_limit(points)
-
     # Invert x, y axis and mirror the z axis around the distance line (Can add deviation adjustment)
     change_coordinates_inplace(points,
                                lambda p: (-p[0], -p[1], camera_map['distance'] - p[2]))
-    points = filter_points(points, demo_pred(60))
+
+    # A predicate to filter points in the cross section of to cameras
+    cross_section_predicate = lambda p: not -60 < atan(p[2] / p[0]) < 60
+
+    points = filter_points(points, cross_section_predicate)
     rotate_point_cloud_inplace(points, camera_map['angle'])
     return points
 
