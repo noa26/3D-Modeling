@@ -179,7 +179,8 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
     change_coordinates_inplace(points,
                                lambda p: (-p[0], -p[1], camera_map['distance'] - p[2]))
 
-    # A predicate to filter points in the cross section of to cameras
+    # A predicate to filter points in the cross section of 2 cameras.
+    # If it is in the cross section the predicate returns True.
     cross_section_predicate = lambda p: not -60 < atan(p[2] / p[0]) < 60
 
     points = filter_points(points, cross_section_predicate)
