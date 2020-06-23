@@ -10,4 +10,4 @@ In order to start working with the camera follow the steps below:
 3. download pyrealsense2:  
     `python -m pip install pyrealsense2`
 
-###### connect your camera and run [hello_camera.py](./hello_camera.py) to see if it worked :)  
+###### connect your camera and run [hello_camera.py](old/hello_camera.py) to see if it worked :)  

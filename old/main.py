@@ -19,7 +19,7 @@ import open3d as o3d
 import numpy as np
 from math import sin, cos, radians
 from typing import List, Tuple
-from pointcloud_creation import average_matrices_to_pointcloud, depthframe_to_depthmatrix
+from old.pointcloud_creation import average_matrices_to_pointcloud, depthframe_to_depthmatrix
 
 # The distance between the camera and the object
 # (for setting the object's center as the origin center of the point cloud)

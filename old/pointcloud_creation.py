@@ -4,7 +4,7 @@ import numpy as np
 import pyrealsense2 as rs2
 from collections import defaultdict
 
-from util import beep
+from old.util import beep
 
 
 def average_matrices_to_pointcloud(mats: List[np.ndarray], intrin: rs2.intrinsics, max_dist=float('Inf'),

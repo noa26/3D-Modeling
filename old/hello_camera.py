@@ -4,7 +4,7 @@ Run this file to see if everything is downloaded properly
 """
 
 import pyrealsense2 as rs
-import util
+from old import util
 
 
 def main():

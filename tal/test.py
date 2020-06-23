@@ -4,8 +4,6 @@ import pyrealsense2 as rs2
 import numpy as np
 import cv2
 
-import util
-
 
 def show_multi_cam(pipes: Iterable) -> None:
     colorizer: rs2.colorizer = rs2.colorizer()

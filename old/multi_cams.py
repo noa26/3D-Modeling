@@ -1,5 +1,5 @@
 """
-asynchronous multi cameras frames extraction.
+TODO: rewrite
 """
 from collections import Iterable
 
@@ -7,17 +7,7 @@ import pyrealsense2 as rs2
 import numpy as np
 import cv2
 
-import util
-
-
-def get_frames(pipe: rs2.pipeline):
-    depth_frame = None
-
-    while not depth_frame:
-        frames = pipe.wait_for_frames()
-        depth_frame = frames.get_depth_frame()
-
-    return depth_frame
+from old import util
 
 
 def show_multi_cam(pipes: Iterable) -> None:
@@ -25,6 +15,7 @@ def show_multi_cam(pipes: Iterable) -> None:
 
     while cv2.waitKey(1) < 0:
         for pipe in pipes:
+            # Camera 1
             # Wait for a coherent pair of frames: depth and color
             frames = pipe.wait_for_frames()
             depth_frame = frames.get_depth_frame()
@@ -42,25 +33,24 @@ def show_multi_cam(pipes: Iterable) -> None:
 
 
 if __name__ == '__main__':
-    serial_numbers = ['918512071186', '918512072325']
-    count = len(serial_numbers)
-    configs = []
-    pipelines = []
-
-    for i in range(len(serial_numbers)):
-        configs.append(rs2.config())
-        pipelines.append(rs2.pipeline())
-        configs[i].enable_device(serial_numbers[i])
-        configs[i].enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
-        configs[i].enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
+    pipeline_1 = rs2.pipeline()
+    config_1 = rs2.config()
+    config_1.enable_device('918512071186')
+    config_1.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+    config_1.enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
+    # ...from Camera 2
+    pipeline_2 = rs2.pipeline()
+    config_2 = rs2.config()
+    config_2.enable_device('918512072325')
+    config_2.enable_stream(rs2.stream.depth, 640, 480, rs2.format.z16, 30)
+    config_2.enable_stream(rs2.stream.color, 640, 480, rs2.format.bgr8, 30)
 
     try:
-        # Start streaming from all cameras
-        for i in range(count):
-            print(util.serial_number(pipelines[i].start(configs[i]).get_device()))
+        # Start streaming from both cameras
+        print(util.serial_number(pipeline_1.start(config_1).get_device()))
+        print(util.serial_number(pipeline_2.start(config_2).get_device()))
 
-        show_multi_cam(pipelines)
-
+        show_multi_cam([pipeline_1, pipeline_2])
     finally:
-        for i in range(count):
-            pipelines[i].stop()
+        pipeline_1.stop()
+        pipeline_2.stop()
