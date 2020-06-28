@@ -28,32 +28,33 @@ def calculate_pc_adjustments_by_pcs(object_pc: np.ndarray, captured_pc: np.ndarr
     return x_shift, y_shift, z_shift
 
 
-def calculate_pc_adjustments_by_frames(object_frame: np.ndarray, captured_frame: np.ndarray,
-                                       intrinsics: rs2.intrinsics) -> Tuple[float, float, float]:
+def calculate_pc_adjustments_by_frames(object_frame: np.ndarray, captured_frame: np.ndarray, intrinsics: rs2.intrinsics,
+                                       shape: str = 'flat') -> Tuple[float, float, float]:
     """
-        The frames should contain only the pixel relevant to the object, any non relevant should be 0.
-        Note: I assume the function can be more efficient because, there's no need to average to object values.
-        :param object_frame: The object's known depth frame
-        :param captured_frame: The captured depth frame
-        :param intrinsics: The intrinsics of the camera that captured the frame
-        :return: The deviation in x,y,z axis from the known point cloud
-        """
+    The frames should contain only the pixel relevant to the object, any non relevant should be 0.
+    Note: I assume the function can be more efficient because, there's no need to average to object values.
+    :param object_frame: The object's known depth frame
+    :param captured_frame: The captured depth frame
+    :param intrinsics: The intrinsics of the camera that captured the frame
+    :param: surface: The shape of the object used to calibrate
+    :return: The deviation in x,y,z axis from the known point cloud
+    """
     assert len(object_frame.shape) == 2
     assert len(captured_frame.shape) == 2
 
-    x_shift = ((find_edge_average(object_frame, 'right', intrinsics)
-                - find_edge_average(captured_frame, 'right', intrinsics))
-               + (find_edge_average(object_frame, 'left', intrinsics)
-                  - find_edge_average(captured_frame, 'left', intrinsics))) / 2
+    x_shift = ((find_edge_mean(object_frame, 'right', intrinsics)
+                - find_edge_mean(captured_frame, 'right', intrinsics))
+               + (find_edge_mean(object_frame, 'left', intrinsics)
+                  - find_edge_mean(captured_frame, 'left', intrinsics))) / 2
 
-    y_shift = (find_edge_average(object_frame, 'up', intrinsics) - find_edge_average(captured_frame, 'up', intrinsics))
+    y_shift = (find_edge_mean(object_frame, 'up', intrinsics) - find_edge_mean(captured_frame, 'up', intrinsics))
 
-    z_shift = np.average(object_frame, axis=0)[2] - np.average(captured_frame, axis=0)[2]
+    z_shift = average_z_frame(object_frame, shape) - average_z_frame(captured_frame, shape)
 
     return x_shift, y_shift, z_shift
 
 
-def find_edge_average(frame: np.ndarray, edge: str, intrinsics: rs2.intrinsics) -> float:
+def find_edge_mean(frame: np.ndarray, edge: str, intrinsics: rs2.intrinsics) -> float:
     """
 
     :param frame: The frame to find an edge on
@@ -114,4 +115,54 @@ def convert_pc_to_frame(pc: np.ndarray, intrinsics: rs2.intrinsics) -> np.ndarra
         i, j = round(i), round(j)
         frame[i][j] = z
 
+    return frame
+
+
+def average_z_frame(frame: np.ndarray, shape: str = 'flat') -> float:
+    """
+
+    :param frame: A frame of a calibration object
+    :param: surface: The shape of the object used to calibrate - flat, cylinder
+    :return: The average z value of the frame, taken to account the of the object
+    """
+
+    assert len(frame.shape) == 2
+
+    if shape == 'flat':
+        vals = []
+        for row in frame:
+            for z in row:
+                vals.append(z)
+        return np.average(vals)
+    elif shape == 'cylinder':
+        vals = []
+        for i in range(frame.shape[0]):
+            left = right = -1
+            for j in range(frame.shape[1] / 2):
+                if frame[i][j] != 0 and left == -1:
+                    left = j
+                elif frame[i][frame.shape[1] - 1 - j] != 0 and right == -1:
+                    right = j
+            vals.append(frame[i][(left + right) / 2])
+        return np.average(vals)
+    else:
+        raise Exception(f'\'{shape}\' is not a shape')
+
+
+def generate_frame_flat_surface(width: float, height: float, distance: float, intrinsics: rs2.intrinsics) -> np.ndarray:
+    """
+
+    :param width: The width of the flat surface in meters
+    :param height: The height of the flat surface in meters
+    :param distance: The distance of the object from the camera
+    :param intrinsics: The intrinsics of the camera that the object should be 'captured' from
+    :return: The frame that should have been captured if that surface was captured from that camera from that distance
+    """
+    frame = np.zeros(shape=(intrinsics.height, intrinsics.width))
+
+    max_j, max_i = rs2.rs2_project_point_to_pixel(intrinsics, [width / 2, height / 2, distance])
+    max_i, max_j = int(min(max_i, intrinsics.height)), int(min(max_j, intrinsics.width))
+    for i in range(intrinsics.height - max_i, max_i):
+        for j in range(intrinsics.width - max_j, max_j):
+            frame[i][j] = distance
     return frame
