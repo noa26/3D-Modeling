@@ -172,8 +172,14 @@ def generate_adapted_point_cloud(camera_map: Dict[str, Any], software_map: Dict[
 
     pc: rs2.pointcloud = rs2.pointcloud()
     points: np.ndarray = np.array(pc.calculate(frame).get_vertices())
-    # Convert to viable np.ndarray, and also filter 'zero' points
-    points = np.array([(x, y, z) for (x, y, z) in points if not x == y == z == 0])
+
+    # The deviation of the camera
+    dx = 0 if 'dx' not in camera_map else camera_map['dx']
+    dy = 0 if 'dy' not in camera_map else camera_map['dy']
+    dz = 0 if 'dz' not in camera_map else camera_map['dz']
+
+    # Convert to viable np.ndarray, and also filter 'zero' points and accounts for deviation
+    points = np.array([(x + dx, y + dy, z + dz) for (x, y, z) in points if not x == y == z == 0])
 
     # Invert x, y axis and mirror the z axis around the distance line (Can add deviation adjustment)
     change_coordinates_inplace(points,

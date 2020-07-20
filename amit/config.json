@@ -18,13 +18,21 @@
       ]
     ],
     "filename": "final_module.stl",
-    "strategy": "bpa"
+    "strategy": "bpa",
+    "deviation_surface_size": [
+      0.09,
+      0.14,
+      0.2
+    ]
   },
   "cameras": [
     {
       "serial": "918512072325",
       "angle": 0,
-      "distance": 0
+      "distance": 0,
+      "dx": -0.14353696228936313,
+      "dy": 0.013968047329145875,
+      "dz": -0.24971007026336475
     }
   ],
   "hardware": {}

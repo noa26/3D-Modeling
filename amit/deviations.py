@@ -1,10 +1,15 @@
-from typing import Tuple
+import functools
+import json
+import multiprocessing as mp
+from typing import Tuple, Dict, Any
 
 import numpy as np
 import pyrealsense2 as rs2
 
+from amit import main
 
-def calculate_pc_adjustments_by_pcs(object_pc: np.ndarray, captured_pc: np.ndarray) -> Tuple[float, float, float]:
+
+def calculate_pc_deviations_by_pc(object_pc: np.ndarray, captured_pc: np.ndarray) -> Tuple[float, float, float]:
     """
 
     :param object_pc: The object's known point cloud
@@ -28,8 +33,8 @@ def calculate_pc_adjustments_by_pcs(object_pc: np.ndarray, captured_pc: np.ndarr
     return x_shift, y_shift, z_shift
 
 
-def calculate_pc_adjustments_by_frames(object_frame: np.ndarray, captured_frame: np.ndarray, intrinsics: rs2.intrinsics,
-                                       shape: str = 'flat') -> Tuple[float, float, float]:
+def calculate_pc_deviations_by_frame(object_frame: np.ndarray, captured_frame: np.ndarray, intrinsics: rs2.intrinsics,
+                                     shape: str = 'flat') -> Tuple[float, float, float]:
     """
     The frames should contain only the pixel relevant to the object, any non relevant should be 0.
     Note: I assume the function can be more efficient because, there's no need to average to object values.
@@ -166,3 +171,56 @@ def generate_frame_flat_surface(width: float, height: float, distance: float, in
         for j in range(intrinsics.width - max_j, max_j):
             frame[i][j] = distance
     return frame
+
+
+def get_intrinsics(config: rs2.config) -> rs2.intrinsics:
+    pipe = rs2.pipeline()
+    try:
+        profile = pipe.start(rs2.config())
+        return profile.get_stream(rs2.stream.depth).as_video_stream_profile().get_intrinsics()
+    finally:
+        pipe.stop()
+
+
+def scan_and_adjust(camera_map: Dict[str, Any], software_map: Dict[str, Any],
+                    hardware_map: Dict[str, Any] = None) -> Tuple[float, float, float]:
+    config: rs2.config = rs2.config()
+    config.enable_stream(rs2.stream.depth)
+    config.enable_device(camera_map['serial'])
+
+    # Convert filter names and args to filter objects
+    filters = [main.get_filter(filter_name, *args) for (filter_name, *args) in software_map['filters']]
+    after_filters = [main.get_filter(filter_name, *args) for (filter_name, *args) in software_map['after_filters']]
+    after_filters.append(main.get_filter('hole_filling_filter'))
+
+    frames = main.capture_frames(config, software_map['frames'], software_map['dummy_frames'])
+    frame = np.array(main.apply_filters(frames, filters, after_filters).get_data()) / 1000
+
+    intrinsics = get_intrinsics(config)
+    surface_size = software_map['deviation_surface_size']
+    flat_sur = generate_frame_flat_surface(width=surface_size[0], height=surface_size[1], distance=surface_size[2],
+                                           intrinsics=intrinsics)
+
+    return calculate_pc_deviations_by_frame(flat_sur, frame, intrinsics)
+
+
+if __name__ == '__main__':
+    with open('config.json') as f:
+        cfg_map = json.load(f)
+
+    cams = cfg_map['cameras']
+
+    # Using processes means effectively side-stepping the Global Interpreter Lock
+    with mp.Pool(processes=len(cams)) as pool:
+        deviation_partial = functools.partial(scan_and_adjust, software_map=cfg_map['software'],
+                                              hardware_map=cfg_map['hardware'])
+        deviations = pool.map(deviation_partial, cams)
+
+    for i in range(len(cams)):
+        cfg_map['cameras'][i]['dx'] = deviations[i][0]
+        cfg_map['cameras'][i]['dy'] = deviations[i][1]
+        cfg_map['cameras'][i]['dz'] = deviations[i][2]
+
+    with open('config.json', 'w') as f:
+        json.dump(cfg_map, f, indent=2)
+    # print(json.dumps(cfg_map, indent=2))
