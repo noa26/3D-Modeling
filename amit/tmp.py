@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import pyrealsense2 as rs2
 
-from amit import clean_up, adjustments
+from amit import main, deviations
 
 
 def write_pc_to_file(frame: np.ndarray, adj: Tuple[float, float, float], intrinsics: rs2.intrinsics,
@@ -24,19 +24,19 @@ try:
 finally:
     pipe.stop()
 
-og_frame = adjustments.generate_frame_flat_surface(0.09, 0.14, 0.2, intrinsics)
+og_frame = deviations.generate_frame_flat_surface(0.09, 0.14, 0.2, intrinsics)
 config = rs2.config()
 config.enable_stream(rs2.stream.depth)
-frames = clean_up.capture_frames(config, 10, 30)
+frames = main.capture_frames(config, 10, 30)
 
-th_filter = clean_up.get_filter('threshold_filter', *(0.18, 0.22))
-temp_filter = clean_up.get_filter('temporal_filter')
-hole_filter = clean_up.get_filter('hole_filling_filter')
+th_filter = main.get_filter('threshold_filter', *(0.18, 0.22))
+temp_filter = main.get_filter('temporal_filter')
+hole_filter = main.get_filter('hole_filling_filter')
 
-fil_frame = clean_up.apply_filters(frames, [temp_filter], [hole_filter, th_filter])
+fil_frame = main.apply_filters(frames, [temp_filter], [hole_filter, th_filter])
 mat = np.array(fil_frame.get_data()) / 1000
 
-adj = adjustments.calculate_pc_adjustments_by_frames(og_frame, mat, intrinsics)
+adj = deviations.calculate_pc_deviations_by_frame(og_frame, mat, intrinsics)
 
 print(adj)
 

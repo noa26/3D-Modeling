@@ -9,22 +9,43 @@
     ],
     "after_filters": [
       [
-        "hole_filling_filter"
-      ],
-      [
         "threshold_filter",
-        0.15000000596046448,
-        0.7
+        0.76,
+        0.82
       ]
     ],
-    "filename": "final_module.stl",
-    "strategy": "bpa"
+    "filename": "boi.stl",
+    "strategy": "bpa",
+    "deviation_surface_size": [
+      0.12,
+      0.18,
+      0.0875
+    ]
   },
   "cameras": [
     {
-      "serial": "918512072325",
+      "serial": "918512073384",
       "angle": 0,
-      "distance": 0
+      "distance": 0.87,
+      "dx": -0.04695116894387919,
+      "dy": -0.0980914424493676,
+      "dz": -0.0052232792845912
+    },
+    {
+      "serial": "918512070565",
+      "angle": 120,
+      "distance": 0.865,
+      "dx": -0.03733129095901552,
+      "dy": -0.10073352484013028,
+      "dz": -0.0067742072032232654
+    },
+    {
+      "serial": "918512072325",
+      "angle": 240,
+      "distance": 0.87,
+      "dx": -0.03731586904057742,
+      "dy": -0.10317622131003847,
+      "dz": -0.005508149321933966
     }
   ],
   "hardware": {}
