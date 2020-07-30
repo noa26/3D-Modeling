@@ -9,5 +9,9 @@ In order to start working with the camera follow the steps below:
 
 3. download pyrealsense2:  
     `python -m pip install pyrealsense2`
+    
+3. download other helpfull libraries:  
+    `python -m pip install open3d`
+
 
 ###### connect your camera and run [hello_camera.py](old/hello_camera.py) to see if it worked :)  
