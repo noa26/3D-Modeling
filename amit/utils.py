@@ -104,7 +104,7 @@ def rotate_point_cloud_inplace(points: np.ndarray, angle: float) -> None:
             points[i][j] = res_vec[j]
 
 
-def save_file(points: np.ndarray, filename: str, strategy: str = 'bpa') -> None:
+def save_file(points: np.ndarray, filename: str) -> None:
     """
     Save a point cloud to a file
     :param points: The point cloud to save to a file
