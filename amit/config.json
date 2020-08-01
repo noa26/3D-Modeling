@@ -1,38 +1,110 @@
 {
-  "software": {
-    "frames": 15,
-    "dummy_frames": 30,
-    "filters": [
-      [
-        "temporal_filter"
-      ]
-    ],
-    "after_filters": [
-      [
-        "threshold_filter",
-        0.1,
-        0.7
-      ]
-    ],
-    "filename": "model.stl",
-    "strategy": "bpa",
-    "deviation_surface_size": [
-      0.15,
-      0.2,
-      12.99
-    ],
-    "debug": false
-  },
+  "number_of_frames": 15,
+  "number_of_dummy_frames": 30,
+  "filename": "1_8_N3_yes_calb_just_l.stl",
+  "max_workers": 1,
+  "debug": false,
+  "calibration_surface": [
+    0.104,
+    0.18,
+    0.09
+  ],
   "cameras": [
     {
-      "serial": "00000000f0090129",
-      "on": false,
+      "serial": "918512070565",
+      "distance": 0.87,
+      "angle": 240,
+      "dx": 0.0012276238259727665,
+      "dy": -0.1073662582679657,
+      "dz": 0.0070413846305031474,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": false
+    },
+    {
+      "serial": "918512073384",
+      "distance": 0.87,
+      "angle": 120,
+      "dx": -0.009330362453519234,
+      "dy": -0.09939209276701881,
+      "dz": 0.008801205532625787,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": false
+    },
+    {
+      "serial": "918512072325",
+      "distance": 0.87,
       "angle": 0,
-      "distance": 0,
-      "dx": 0,
-      "dy": 0,
-      "dz": 0
+      "dx": -0.0008620406099398327,
+      "dy": -0.1037437865120727,
+      "dz": 0.007831509188286165,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": false
+    },
+    {
+      "serial": "00000000f0141013",
+      "distance": 0.87,
+      "angle": 180,
+      "dx": -0.062118497864603064,
+      "dy": -0.16846721844845697,
+      "dz": 0.017253486653645834,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": true
+    },
+    {
+      "serial": "00000000f0090129",
+      "distance": 0.87,
+      "angle": 60,
+      "dx": -0.03060486500391797,
+      "dy": -0.16638805606379742,
+      "dz": 0.0038627770182291625,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": true
+    },
+    {
+      "serial": "00000000f0090440",
+      "distance": 0.87,
+      "angle": 300,
+      "dx": -0.015011089364881042,
+      "dy": -0.18088617999679768,
+      "dz": 0.007414601562500008,
+      "filters": [
+        [
+          "threshold_filter",
+          0.7,
+          0.9
+        ]
+      ],
+      "on": true
     }
-  ],
-  "hardware": {}
+  ]
 }

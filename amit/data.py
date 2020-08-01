@@ -7,6 +7,7 @@ import pyrealsense2 as rs2
 
 from amit.camera import Camera, CameraType
 
+
 # TODO: Add debug staff
 
 class Data:
@@ -55,7 +56,8 @@ class Data:
             data_dict['number_of_dummy_frames']
         data.filename = 'default.stl' if 'filename' not in data_dict else data_dict['filename']
         data.max_workers = 1 if 'max_workers' not in data_dict else data_dict['max_workers']
-        data.calibration_surface = (0, 0, 0) if 'calibration_surface' not in data_dict else data_dict['calibration_surface']
+        data.calibration_surface = (0, 0, 0) if 'calibration_surface' not in data_dict else data_dict[
+            'calibration_surface']
         data.debug = False if 'debug' not in data_dict else data_dict['debug']
 
         return data
@@ -78,8 +80,8 @@ class Data:
         :return: A dictionary representing the data
         """
         data_dict = {'number_of_frames': self.number_of_frames, 'number_of_dummy_frames': self.number_of_dummy_frames,
-                     'filename': self.filename, 'debug': self.debug, 'calibration_surface': self.calibration_surface,
-                     'cameras': []}
+                     'filename': self.filename, 'max_workers': self.max_workers, 'debug': self.debug,
+                     'calibration_surface': self.calibration_surface, 'cameras': []}
         for cam in self.cameras:
             data_dict['cameras'].append(cam.to_dict())
 
@@ -142,9 +144,15 @@ class Data:
 
             # LiDAR cameras cannot capture simultaneously, for now run them serially
             # TODO: defeat python's shitty concurrency model and make it more concurrent
-            _ = [lcam.scan_and_calibrate(self.calibration_surface, self.number_of_frames, self.number_of_dummy_frames)
-                 for lcam in lidar_cams]
-            for fut in futures:
-                fut.result()
+            diffs = [
+                lcam.scan_and_calibrate(self.calibration_surface, self.number_of_frames, self.number_of_dummy_frames)
+                for lcam in lidar_cams]
 
+            for i, diff in enumerate(diffs):
+                lcam = lidar_cams[i]
+                lcam.dx, lcam.dy, lcam.dz = diff
+
+            for i, fut in enumerate(futures):
+                dcam = depth_cams[i]
+                dcam.dx, dcam.dy, dcam.dz = fut.result()
         return

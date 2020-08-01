@@ -2,7 +2,7 @@
 GUI for handling and monitoring 3D Mapping.
 """
 
-import styles
+import styles as styles
 from backend import *
 from start_page import StartPage
 from about_page import AboutPage

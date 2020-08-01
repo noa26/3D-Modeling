@@ -25,7 +25,6 @@ class Camera:
         self.dy: float = 0
         self.dz: float = 0
         self.filters: List[List[Any]] = []
-        self.after_filters: List[List[Any]] = []
         self.on: bool = False
 
     @staticmethod
@@ -61,7 +60,6 @@ class Camera:
         cam.dy = 0 if 'dy' not in cam_dict else cam_dict['dy']
         cam.dz = 0 if 'dz' not in cam_dict else cam_dict['dz']
         cam.filters = [] if 'filters' not in cam_dict else cam_dict['filters']
-        cam.after_filters = [] if 'after_filters' not in cam_dict else cam_dict['after_filters']
         cam.on = True if 'on' not in cam_dict else cam_dict['on']
         return cam
 
@@ -82,7 +80,7 @@ class Camera:
         :return: A dictionary representing the camera
         """
         return {'serial': self.serial, 'distance': self.distance, 'angle': self.angle, 'dx': self.dx, 'dy': self.dy,
-                'dz': self.dz, 'filters': self.filters, 'after_filters': self.after_filters, 'on': self.on}
+                'dz': self.dz, 'filters': self.filters, 'on': self.on}
 
     def dumps_json(self: 'Camera', indent=2) -> str:
         """
@@ -100,7 +98,7 @@ class Camera:
         """
         fp.write(self.dumps_json(indent))
 
-    def get_conifg(self: 'Camera') -> rs2.config:
+    def get_config(self: 'Camera') -> rs2.config:
         """
         :return: A config for this camera
         """
@@ -166,7 +164,7 @@ class Camera:
         :param filter_predicate: A predicate to indicate whether to remove a point or not (if True, it is removed)
         :return: The point cloud generated after all the calculations
         """
-        config = self.get_conifg()  # Config has to keep a reference 'cause pyrealsense2 and python are stupid
+        config = self.get_config()  # Config has to keep a reference 'cause pyrealsense2 and python are stupid
         return self.frames_to_adapted_point_cloud(
             Camera.capture_frames(config, number_of_frames, number_of_dummy_frames), filter_predicate)
 
@@ -195,17 +193,14 @@ class Camera:
         return points
 
     def scan_and_calibrate(self: 'Camera', calibration_surface: Tuple[float, float, float], number_of_frames: int = 1,
-                           number_of_dummy_frames: int = 0, ) -> None:
-        config = self.get_conifg()
+                           number_of_dummy_frames: int = 0, ) -> Tuple[float, float, float]:
+        config = self.get_config()
         frames = Camera.capture_frames(config, number_of_frames, number_of_dummy_frames)
-        frame = self.apply_filters(frames)
+        frame = np.array(self.apply_filters(frames).get_data()) / 10000
 
         intrinsics = utils.get_intrinsics(config)
         flat_sur = deviations.generate_frame_flat_surface(width=calibration_surface[0], height=calibration_surface[1],
                                                           distance=self.distance - calibration_surface[2],
                                                           intrinsics=intrinsics)
 
-        dev = deviations.calculate_pc_deviations_by_frame(flat_sur, frame, intrinsics)
-        self.dx = dev[0]
-        self.dy = dev[1]
-        self.dz = dev[2]
+        return deviations.calculate_pc_deviations_by_frame(flat_sur, frame, intrinsics)
