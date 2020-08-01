@@ -74,14 +74,19 @@ class Camera:
                 return CameraType(device.get_info(rs2.camera_info.product_line)[0])
         raise Exception(f'The device with serial number {serial} is not connected')
 
+    def to_dict(self: 'Camera') -> Dict[str, Any]:
+        """
+        :return: A dictionary representing the camera
+        """
+        return {'serial': self.serial, 'distance': self.distance, 'angle': self.angle, 'dx': self.dx, 'dy': self.dy,
+                'dz': self.dz, 'filters': self.filters, 'after_filters': self.after_filters, 'on': self.on}
+
     def dumps_json(self: 'Camera', indent=2) -> str:
         """
         :param indent: The json indent level
         :return: A json formatted string encoding the camera
         """
-        params = {'serial': self.serial, 'distance': self.distance, 'angle': self.angle, 'dx': self.dx, 'dy': self.dy,
-                  'dz': self.dz, 'filters': self.filters, 'after_filters': self.after_filters, 'on': self.on}
-        return json.dumps(params, indent=indent)
+        return json.dumps(self.to_dict(), indent=indent)
 
     def dump_json(self: 'Camera', fp: TextIO, indent=2) -> None:
         """
@@ -137,15 +142,13 @@ class Camera:
         :param frames: The frames to filter
         :return: The final frame after adding filters
         """
-
         frame: rs2.frame = frames[0]
 
-        filters = utils.get_filters(self.filters)
+        temp_filter = rs2.temporal_filter()
         for frame in frames:
-            for fil in filters:
-                frame = fil.process(frame)
+            frame = temp_filter.process(frame)
 
-        filters = utils.get_filters(self.after_filters)
+        filters = utils.get_filters(self.filters)
         for fil in filters:
             frame = fil.process(frame)
 
@@ -162,7 +165,7 @@ class Camera:
         """
         config = self.get_conifg()  # Config has to keep a reference 'cause pyrealsense2 and python are stupid
         return self.frames_to_adapted_point_cloud(
-            self.capture_frames(config, number_of_frames, number_of_dummy_frames), filter_predicate)
+            Camera.capture_frames(config, number_of_frames, number_of_dummy_frames), filter_predicate)
 
     def frames_to_adapted_point_cloud(self: 'Camera', frames: List[rs2.depth_frame],
                                       filter_predicate=lambda p: False) -> np.ndarray:

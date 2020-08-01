@@ -126,3 +126,12 @@ def save_file(points: np.ndarray, filename: str) -> None:
         o3d.utility.DoubleVector([radius, radius * 2]))
 
     o3d.io.write_triangle_mesh(filename, mesh)
+
+
+def get_intrinsics(config: rs2.config) -> rs2.intrinsics:
+    pipe = rs2.pipeline()
+    try:
+        profile = pipe.start(config)
+        return profile.get_stream(rs2.stream.depth).as_video_stream_profile().get_intrinsics()
+    finally:
+        pipe.stop()

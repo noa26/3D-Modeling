@@ -68,17 +68,24 @@ class Data:
 
         return Data.load_dict(cfg_map)
 
+    def to_dict(self:'Data') -> Dict[str, Any]:
+        """
+        :return: A dictionary representing the data
+        """
+        dict = {'number_of_frames': self.number_of_frames, 'number_of_dummy_frames': self.number_of_dummy_frames,
+                   'filename': self.filename, 'debug': self.debug,
+                   'cameras': []}
+        for cam in self.cameras:
+            dict['cameras'].append(cam.to_dict())
+        
+        return dict
+
     def dumps_json(self: 'Data', indent=2) -> str:
         """
         :param indent: The json indent level
         :return: A json formatted string encoding the data
         """
-        cfg_map = {'number_of_frames': self.number_of_frames, 'number_of_dummy_frames': self.number_of_dummy_frames,
-                   'filename': self.filename, 'debug': self.debug,
-                   'cameras': []}
-        for cam in self.cameras:
-            cfg_map['cameras'].append(cam.dumps_json(indent))
-        return json.dumps(cfg_map)
+        return json.dumps(self.to_dict(), indent=indent)
 
     def dump_json(self: 'Data', fp: TextIO, indent=2) -> None:
         """
