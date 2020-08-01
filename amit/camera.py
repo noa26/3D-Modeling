@@ -1,29 +1,32 @@
 import json
 from enum import Enum
-from typing import List, Any, Dict, Iterable, TextIO
+from typing import List, Any, Dict, Iterable, TextIO, Tuple
 
 import numpy as np
 import pyrealsense2 as rs2
 
-from amit import utils
+from amit import utils, deviations
 
 
 class CameraType(Enum):
+    Undefined = 'U'
     Depth = 'D'
     LiDAR = 'L'
 
 
 class Camera:
-    serial: str
-    distance: float
-    angle: float
-    type: CameraType
-    dx: float
-    dy: float
-    dz: float
-    filters: List[List[Any]]
-    after_filters: List[List[Any]]
-    on: bool
+
+    def __init__(self: 'Camera') -> None:
+        self.serial: str = ''
+        self.distance: float = 0
+        self.angle: float = 0
+        self.type: CameraType = CameraType('U')
+        self.dx: float = 0
+        self.dy: float = 0
+        self.dz: float = 0
+        self.filters: List[List[Any]] = []
+        self.after_filters: List[List[Any]] = []
+        self.on: bool = False
 
     @staticmethod
     def load_json(fp: TextIO) -> 'Camera':
@@ -44,22 +47,22 @@ class Camera:
         return cam
 
     @staticmethod
-    def load_dict(params: Dict[str, Any]) -> 'Camera':
+    def load_dict(cam_dict: Dict[str, Any]) -> 'Camera':
         """
-        :param params: A dictionary encoding the camera
+        :param cam_dict: A dictionary encoding the camera
         :return: A Camera Object decoded from the Dict
         """
         cam = Camera()
-        cam.serial = params['serial']
+        cam.serial = cam_dict['serial']
         cam.type = Camera.get_camera_type(cam.serial)
-        cam.angle = 0 if 'angle' not in params else params['angle']
-        cam.distance = 0 if 'distance' not in params else params['distance']
-        cam.dx = 0 if 'dx' not in params else params['dx']
-        cam.dy = 0 if 'dy' not in params else params['dy']
-        cam.dz = 0 if 'dz' not in params else params['dz']
-        cam.filters = [] if 'filters' not in params else params['filters']
-        cam.after_filters = [] if 'after_filters' not in params else params['after_filters']
-        cam.on = True if 'on' not in params else params['on']
+        cam.angle = 0 if 'angle' not in cam_dict else cam_dict['angle']
+        cam.distance = 0 if 'distance' not in cam_dict else cam_dict['distance']
+        cam.dx = 0 if 'dx' not in cam_dict else cam_dict['dx']
+        cam.dy = 0 if 'dy' not in cam_dict else cam_dict['dy']
+        cam.dz = 0 if 'dz' not in cam_dict else cam_dict['dz']
+        cam.filters = [] if 'filters' not in cam_dict else cam_dict['filters']
+        cam.after_filters = [] if 'after_filters' not in cam_dict else cam_dict['after_filters']
+        cam.on = True if 'on' not in cam_dict else cam_dict['on']
         return cam
 
     @staticmethod
@@ -190,3 +193,19 @@ class Camera:
         points = utils.filter_points(points, filter_predicate)
         utils.rotate_point_cloud_inplace(points, self.angle)
         return points
+
+    def scan_and_calibrate(self: 'Camera', calibration_surface: Tuple[float, float, float], number_of_frames: int = 1,
+                           number_of_dummy_frames: int = 0, ) -> None:
+        config = self.get_conifg()
+        frames = Camera.capture_frames(config, number_of_frames, number_of_dummy_frames)
+        frame = self.apply_filters(frames)
+
+        intrinsics = utils.get_intrinsics(config)
+        flat_sur = deviations.generate_frame_flat_surface(width=calibration_surface[0], height=calibration_surface[1],
+                                                          distance=self.distance - calibration_surface[2],
+                                                          intrinsics=intrinsics)
+
+        dev = deviations.calculate_pc_deviations_by_frame(flat_sur, frame, intrinsics)
+        self.dx = dev[0]
+        self.dy = dev[1]
+        self.dz = dev[2]

@@ -41,7 +41,7 @@ def calculate_pc_deviations_by_frame(object_frame: np.ndarray, captured_frame: n
     :param object_frame: The object's known depth frame
     :param captured_frame: The captured depth frame
     :param intrinsics: The intrinsics of the camera that captured the frame
-    :param: surface: The shape of the object used to calibrate
+    :param: shape: The shape of the object used to calibrate
     :return: The deviation in x,y,z axis from the known point cloud
     """
     assert len(object_frame.shape) == 2

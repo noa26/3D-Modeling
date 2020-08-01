@@ -1,20 +1,24 @@
 import json
 from concurrent.futures.process import ProcessPoolExecutor
-from typing import List, Dict, Any, TextIO
+from typing import List, Dict, Any, TextIO, Tuple
 
 import numpy as np
 import pyrealsense2 as rs2
 
 from amit.camera import Camera, CameraType
 
+# TODO: Add debug staff
 
 class Data:
-    cameras: List[Camera]
-    number_of_frames: int
-    number_of_dummy_frames: int
-    filename: str
-    max_workers: int
-    debug: bool
+
+    def __init__(self: 'Data'):
+        self.cameras: List[Camera] = []
+        self.number_of_frames: int = 0
+        self.number_of_dummy_frames: int = 0
+        self.filename: str = ''
+        self.max_workers: int = 0
+        self.calibration_surface: Tuple[float, float, float] = (0, 0, 0)
+        self.debug: bool = False
 
     @staticmethod
     def load_json(fp: TextIO) -> 'Data':
@@ -35,23 +39,24 @@ class Data:
         return data
 
     @staticmethod
-    def load_dict(cfg_dict: Dict[str, Any]) -> 'Data':
+    def load_dict(data_dict: Dict[str, Any]) -> 'Data':
         """
-        :param cfg_dict: A dictionary encoding the data
+        :param data_dict: A dictionary encoding the data
         :return: A Data Object decoded from the Dict
         """
         data = Data()
 
         data.cameras = []
-        for cam_param in cfg_dict['cameras']:
+        for cam_param in data_dict['cameras']:
             data.cameras.append(Camera.load_dict(cam_param))
 
-        data.number_of_frames = 15 if 'number_of_frame' not in cfg_dict else cfg_dict['number_of_frame']
-        data.number_of_dummy_frames = 30 if 'number_of_dummy_frames' not in cfg_dict else \
-            cfg_dict['number_of_dummy_frames']
-        data.filename = 'default.stl' if 'filename' not in cfg_dict else cfg_dict['filename']
-        data.max_workers = 1 if 'max_workers' not in cfg_dict else cfg_dict['max_workers']
-        data.debug = False if 'debug' not in cfg_dict else cfg_dict['debug']
+        data.number_of_frames = 15 if 'number_of_frame' not in data_dict else data_dict['number_of_frame']
+        data.number_of_dummy_frames = 30 if 'number_of_dummy_frames' not in data_dict else \
+            data_dict['number_of_dummy_frames']
+        data.filename = 'default.stl' if 'filename' not in data_dict else data_dict['filename']
+        data.max_workers = 1 if 'max_workers' not in data_dict else data_dict['max_workers']
+        data.calibration_surface = (0, 0, 0) if 'calibration_surface' not in data_dict else data_dict['calibration_surface']
+        data.debug = False if 'debug' not in data_dict else data_dict['debug']
 
         return data
 
@@ -68,17 +73,17 @@ class Data:
 
         return Data.load_dict(cfg_map)
 
-    def to_dict(self:'Data') -> Dict[str, Any]:
+    def to_dict(self: 'Data') -> Dict[str, Any]:
         """
         :return: A dictionary representing the data
         """
-        dict = {'number_of_frames': self.number_of_frames, 'number_of_dummy_frames': self.number_of_dummy_frames,
-                   'filename': self.filename, 'debug': self.debug,
-                   'cameras': []}
+        data_dict = {'number_of_frames': self.number_of_frames, 'number_of_dummy_frames': self.number_of_dummy_frames,
+                     'filename': self.filename, 'debug': self.debug, 'calibration_surface': self.calibration_surface,
+                     'cameras': []}
         for cam in self.cameras:
-            dict['cameras'].append(cam.to_dict())
-        
-        return dict
+            data_dict['cameras'].append(cam.to_dict())
+
+        return data_dict
 
     def dumps_json(self: 'Data', indent=2) -> str:
         """
@@ -118,3 +123,28 @@ class Data:
                 pcs.append(fut.result())
 
         return np.concatenate(pcs)
+
+    def scan_and_calibrate_all(self: 'Data') -> None:
+        """
+        Scans a calibration object and adjust the cameras accordingly
+        :return: None
+        """
+        depth_cams = [cam for cam in self.cameras if cam.on and cam.type is CameraType.Depth]
+        lidar_cams = [cam for cam in self.cameras if cam.on and cam.type is CameraType.LiDAR]
+
+        # Using processes means effectively side-stepping the Global Interpreter Lock
+        with ProcessPoolExecutor(max_workers=min(self.max_workers, len(depth_cams) + len(lidar_cams))) as pool:
+            futures = [
+                pool.submit(dcam.scan_and_calibrate, self.calibration_surface, self.number_of_frames,
+                            self.number_of_dummy_frames)
+                for dcam in depth_cams
+            ]
+
+            # LiDAR cameras cannot capture simultaneously, for now run them serially
+            # TODO: defeat python's shitty concurrency model and make it more concurrent
+            _ = [lcam.scan_and_calibrate(self.calibration_surface, self.number_of_frames, self.number_of_dummy_frames)
+                 for lcam in lidar_cams]
+            for fut in futures:
+                fut.result()
+
+        return
