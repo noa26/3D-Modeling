@@ -2,38 +2,36 @@ import styles
 import backend
 import tkinter as tk
 from typing import List
-
-filters = ['decimation_filter', 'threshold_filter', 'disparity_transform', 'spatial_filter']
-after_filters = ['temporal_filter', 'hole_filling_filter']
+from amit.data import Data
+filters = ['decimation_filter', 'threshold_filter', 'disparity_transform', 'spatial_filter', 'hole_filling_filter']
 
 
 class ConfigurationWindow(tk.Toplevel):
-    def __init__(self, parent):
+    def __init__(self, controller: tk.Tk):
         tk.Toplevel.__init__(self, **styles.WINDOW_STYLE)
         self.geometry("500x500")
-        self.cameras = []
+
+        self.data: Data = controller.data
+
         canvas = tk.Canvas(self, **styles.CANVAS_STYLE)
         scroll_y = tk.Scrollbar(self, orient='vertical', command=canvas.yview)
-
         container = tk.Frame(canvas, **styles.FRAME_STYLE)
 
         f = tk.Frame(container, **styles.FRAME_STYLE)
-        add_camera(f, self.cameras)
+        add_camera(f, self.data.cameras)
         f.pack()
 
-        # Add Camera button
+        # Camera button
         tk.Button(container, text='Add Camera', **styles.BUTTON_STYLE,
-                  command=lambda: add_camera(f, self.cameras)).pack()
+                  command=lambda: add_camera(f, self.data.cameras)).pack()
         # Set Configurations button
         tk.Button(container, text='Set Configurations', ** styles.BUTTON_STYLE,
-                  command=lambda: set_config(self.cameras)).pack()
+                  command=lambda: set_config(self.data.cameras)).pack()
 
         canvas.create_window(0, 0, anchor='nw', window=container)
         # make sure everything is displayed before configuring the scrollregion
         canvas.update_idletasks()
-
-        canvas.configure(scrollregion=(0, 0, 5000, 5000),
-                         yscrollcommand=scroll_y.set)
+        canvas.configure(scrollregion=(0, 0, 5000, 5000), yscrollcommand=scroll_y.set)
 
         canvas.pack(fill='both', expand=True, side='left')
         scroll_y.pack(fill='y', side='right')
@@ -54,13 +52,14 @@ def add_camera(parent: tk.Frame, cameras: List[dict]):
     tk.Label(subframe, text=header, **styles.LABEL2_STYLE).grid(row=0, column=0, pady=10, sticky='E')
     tk.Label(subframe, textvariable=cam_config['serial'], **styles.LABEL2_STYLE).grid(row=0, column=1, sticky='W')
 
-    cameras.append(cam_config)
+    # cameras.append(cam_config)
+    print("couldnt add a camera!")
     pass
 
 
 def camera_form(parent: tk.Frame, row=0):
     cam_config = {'serial': tk.StringVar(), 'distance': tk.DoubleVar(), 'angle': tk.IntVar(),
-                  'filters': dict(), 'after_filters': dict()}
+                  'filters': dict()}
 
     # serial numbers
     row += 1
@@ -83,13 +82,12 @@ def camera_form(parent: tk.Frame, row=0):
     tk.Entry(parent, textvariable=cam_config['angle'], **styles.ENTRY_STYLE).grid(row=row, column=1, sticky='W')
 
     # filters
-    cam_config['filters'], cam_config['after_filters'] = filters_form(parent, row)
+    cam_config['filters'] = filters_form(parent, row)
     return cam_config
 
 
 def filters_form(parent: tk.Frame, row=0):
     filters_d = {f: (tk.IntVar(), tk.StringVar()) for f in filters}
-    after_filters_d = {f: (tk.IntVar(), tk.StringVar()) for f in after_filters}
 
     row += 1
     tk.Label(parent, text='filters', **styles.LABEL1_STYLE).grid()
@@ -99,12 +97,4 @@ def filters_form(parent: tk.Frame, row=0):
                        command=lambda: print("hello :)"), **styles.CHECKBUTTON_STYLE).grid(sticky='W')
         tk.Entry(parent, textvariable=var[1], width=5, **styles.ENTRY_STYLE).grid(row=row, column=1)
 
-    row += 1
-    tk.Label(parent, text='after filters', **styles.LABEL1_STYLE).grid()
-    for filter_name, var in after_filters_d.items():
-        row += 1
-        tk.Checkbutton(parent, text=filter_name, variable=var, onvalue=1, offvalue=0,
-                       command=lambda: print("hello after :)"), **styles.CHECKBUTTON_STYLE).grid(sticky='W')
-        tk.Entry(parent, textvariable=var[1], width=5, **styles.ENTRY_STYLE).grid(row=row, column=1)
-
-    return filters_d, after_filters_d
+    return filters_d

@@ -7,6 +7,7 @@ from backend import *
 from start_page import StartPage
 from about_page import AboutPage
 from configuration_window import ConfigurationWindow
+from amit.data import Data
 
 import tkinter as tk
 from tkinter import messagebox
@@ -29,11 +30,6 @@ for spine in ax.spines.values():
     spine.set_color(styles.BG_COLOR)
 
 
-def do_nothing(_):
-    # TODO: load data from configuration file
-    pass
-
-
 class DepthProcessingApp(tk.Tk):
     """
     Initialize the app's main components.
@@ -42,12 +38,14 @@ class DepthProcessingApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
-        self.status = 1
+        self.status: int = 1
+        self.frames: dict = dict()
+        self.data: Data = Data.load_context(rs2.context())
+
         self.geometry("800x400")
         self.wm_title("3D Modeling")
-        self.frames = dict()
 
-        # add menu-bar
+        # menu bar
         menu_bar = self.create_menubar(self)
         self.config(menu=menu_bar)
 
@@ -74,25 +72,36 @@ class DepthProcessingApp(tk.Tk):
         menu_bar = tk.Menu(container)
 
         # cameras cascade
-        cameras_f = tk.Menu(menu_bar, tearoff=0)
+        cameras_c = tk.Menu(menu_bar, tearoff=0)
         for camera in available_cameras():
-            cameras_f.add_command(label="camera " + camera,
+            cameras_c.add_command(label="camera " + camera,
                                   command=lambda sn=camera: camera_display(sn))
 
-        menu_bar.add_command(label="Start", command=lambda: self.show_frame(StartPage))
-        menu_bar.add_cascade(label="Cameras", menu=cameras_f)
-        menu_bar.add_command(label="Status", command=lambda: self.get_status())
-        menu_bar.add_command(label="Configurations", command=lambda: self.set_configurations())
-        menu_bar.add_command(label="About", command=lambda: self.show_frame(AboutPage))
+        # configurations cascade
+        config_c = tk.Menu(menu_bar, tearoff=0)
+        config_c.add_command(label='edit configurations', command=lambda: self.edit_configurations())
+        config_c.add_command(label='load configurations', command=lambda: self.load_configurations())
+        config_c.add_command(label='save configurations', command=lambda: self.save_configurations())
+
+        menu_bar.add_command(label='Start', command=lambda: self.show_frame(StartPage))
+        menu_bar.add_cascade(label='Cameras', menu=cameras_c)
+        menu_bar.add_command(label='Status', command=lambda: self.get_status())
+        menu_bar.add_cascade(label='Configurations', menu=config_c)
+        menu_bar.add_command(label='About', command=lambda: self.show_frame(AboutPage))
 
         return menu_bar
 
-    def set_configurations(self):
+    def edit_configurations(self):
         ConfigurationWindow(self)
-        pass
+
+    def load_configurations(self):
+        self.data = Data.load_json(open('config.json', 'r'))
+
+    def save_configurations(self):
+        Data.dump_json(self.data, open('config.json', 'w'))
 
 
 if __name__ == "__main__":
     app = DepthProcessingApp()
-    ani = animation.FuncAnimation(f, do_nothing, interval=200)
+    ani = animation.FuncAnimation(f, lambda *args: None, interval=200)
     app.mainloop()

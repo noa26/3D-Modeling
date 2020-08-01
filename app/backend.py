@@ -3,27 +3,23 @@ import json
 import numpy as np
 import pyrealsense2 as rs2
 from typing import List
+from amit.data import Data
+from amit import utils
 
 
-with open('config.json') as f:
-    cfg_map = json.load(f)
-cams = cfg_map['cameras']
+def capture(entries, d: Data, listener=None):
+    filename = entries['file_name'].get() + entries['file_type'].get()
+    utils.save_file(d.scan_object(), filename)
 
-
-def capture(entries, listener):
-    print('filetype:', entries['file_type'].get())
-    print('filename:', entries['file_name'].get())
-    print("unimplemented\tcapture")
-    pass
+    print("implemented\tcapture", filename)
 
 
 def available_cameras() -> List[str]:
-    return ['a' * 20, 'b' * 20]
-    # def serial_number(device: rs2.device) -> str:
-    #     return device.get_info(rs2.camera_info.serial_number)
-    #
-    # ctx = rs2.context()
-    # return [serial_number(device) for device in ctx.devices]
+    def serial_number(device: rs2.device) -> str:
+        return device.get_info(rs2.camera_info.serial_number)
+
+    ctx = rs2.context()
+    return [serial_number(device) for device in ctx.devices]
 
 
 def camera_display(serial_num: str) -> int:
