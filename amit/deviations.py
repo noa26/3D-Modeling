@@ -33,6 +33,15 @@ def calculate_pc_deviations_by_pc(object_pc: np.ndarray, captured_pc: np.ndarray
     return x_shift, y_shift, z_shift
 
 
+def calculate_pc_deviations_by_pcV2(pc: np.ndarray) -> Tuple[float, float, float]:
+    assert len(pc.shape) == 2
+    assert pc.shape[1] == 3
+
+    avg = np.average(pc, axis=0)
+
+    return float(-avg[0]), float(-avg[1]), float(avg[2])
+
+
 def calculate_pc_deviations_by_frame(object_frame: np.ndarray, captured_frame: np.ndarray, intrinsics: rs2.intrinsics,
                                      shape: str = 'flat') -> Tuple[float, float, float]:
     """

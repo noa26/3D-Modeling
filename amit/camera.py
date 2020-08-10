@@ -188,12 +188,14 @@ class Camera:
         utils.change_coordinates_inplace(points,
                                          lambda p: (-p[0], -p[1], self.distance - p[2]))
 
-        points = utils.filter_points(points, filter_predicate)
+        from math import atan
+        points = utils.filter_points(points, lambda p: not -60 < atan(p[2] / p[0]) < 60)
+        # points = utils.filter_points(points, filter_predicate)
         utils.rotate_point_cloud_inplace(points, self.angle)
         return points
 
     def scan_and_calibrate(self: 'Camera', calibration_surface: Tuple[float, float, float], number_of_frames: int = 1,
-                           number_of_dummy_frames: int = 0, ) -> Tuple[float, float, float]:
+                           number_of_dummy_frames: int = 0) -> Tuple[float, float, float]:
         config = self.get_config()
         frames = Camera.capture_frames(config, number_of_frames, number_of_dummy_frames)
         frame = np.array(self.apply_filters(frames).get_data()) / 10000
@@ -204,3 +206,16 @@ class Camera:
                                                           intrinsics=intrinsics)
 
         return deviations.calculate_pc_deviations_by_frame(flat_sur, frame, intrinsics)
+
+    def scan_and_calibrateV2(self: 'Camera', surface_radius, number_of_frames: int = 1,
+                             number_of_dummy_frames: int = 0) -> Tuple[float, float, float]:
+
+        config = self.get_config()
+        frames = Camera.capture_frames(config, number_of_frames, number_of_dummy_frames)
+        frame = self.apply_filters(frames)
+        pc = rs2.pointcloud()
+        points = np.array(pc.calculate(frame).get_vertices())
+        points = np.array([(x, y, z) for (x, y, z) in points if not x == y == z == 0])
+        diffs = deviations.calculate_pc_deviations_by_pcV2(points)
+
+        return diffs[0], diffs[1], diffs[2] + surface_radius - self.distance

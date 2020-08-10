@@ -126,6 +126,34 @@ class Data:
 
         return np.concatenate(pcs)
 
+    def scan_and_calibrate_allV2(self: 'Data') -> None:
+        depth_cams = [cam for cam in self.cameras if cam.on and cam.type is CameraType.Depth]
+        lidar_cams = [cam for cam in self.cameras if cam.on and cam.type is CameraType.LiDAR]
+
+        # Using processes means effectively side-stepping the Global Interpreter Lock
+        with ProcessPoolExecutor(max_workers=min(self.max_workers, len(depth_cams) + len(lidar_cams))) as pool:
+            futures = [
+                pool.submit(dcam.scan_and_calibrateV2, self.calibration_surface[2], self.number_of_frames,
+                            self.number_of_dummy_frames)
+                for dcam in depth_cams
+            ]
+
+            # LiDAR cameras cannot capture simultaneously, for now run them serially
+            # TODO: defeat python's shitty concurrency model and make it more concurrent
+            diffs = [
+                lcam.scan_and_calibrateV2(self.calibration_surface[2], self.number_of_frames,
+                                          self.number_of_dummy_frames)
+                for lcam in lidar_cams]
+
+            for i, diff in enumerate(diffs):
+                lcam = lidar_cams[i]
+                lcam.dx, lcam.dy, lcam.dz = diff
+
+            for i, fut in enumerate(futures):
+                dcam = depth_cams[i]
+                dcam.dx, dcam.dy, dcam.dz = fut.result()
+        return
+
     def scan_and_calibrate_all(self: 'Data') -> None:
         """
         Scans a calibration object and adjust the cameras accordingly
